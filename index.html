@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Notepad</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toolbar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .toolbar button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd6;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a5a;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #43a047;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Formatting Toolbar */
+        .format-toolbar {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #e0e0e0;
+            align-items: center;
+        }
+
+        .format-toolbar.hidden {
+            display: none;
+        }
+
+        .format-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .format-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .format-divider {
+            width: 1px;
+            height: 30px;
+            background: #ddd;
+            margin: 0 8px;
+        }
+
+        /* Editor */
+        #editor {
+            width: 100%;
+            min-height: 400px;
+            padding: 20px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: vertical;
+            background: white;
+            overflow-y: auto;
+        }
+
+        #editor.plain-text {
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre-wrap;
+        }
+
+        #editor.rich-text {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #editor h1, #editor h2, #editor h3 {
+            margin: 0.5em 0;
+        }
+
+        #editor ul, #editor ol {
+            margin-left: 20px;
+        }
+
+        #editor blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+            margin: 10px 0;
+            color: #555;
+            font-style: italic;
+        }
+
+        #editor code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+        }
+
+        #editor pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+        }
+
+        #editor a {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        #editor hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 15px 0;
+        }
+
+        .editor-container {
+            background: white;
+            border-radius: 0 0 12px 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Conversion Info Panel */
+        .info-panel {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .info-panel h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-panel ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .info-panel li {
+            margin: 5px 0;
+        }
+
+        .info-panel code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        @media (max-width: 600px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .toggle-container {
+                margin-left: 0;
+                justify-content: center;
+            }
+            
+            .toolbar-group {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Smart Text Notepad</h1>
+        
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="btn-primary" onclick="saveAsFile()">💾 Save</button>
+                <button class="btn-secondary" onclick="loadFile()">📂 Open</button>
+                <button class="btn-success" onclick="convertToRichText()">✨ Auto-Format</button>
+                <button class="btn-danger" onclick="clearEditor()">🗑️ Clear</button>
+            </div>
+            
+            <div class="toggle-container">
+                <span class="toggle-label">Plain Text</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="formatToggle" onchange="toggleFormat()">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label">Rich Text</span>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <div class="format-toolbar hidden" id="formatToolbar">
+                <button class="format-btn" onclick="formatText('bold')" title="Bold"><b>B</b></button>
+                <button class="format-btn" onclick="formatText('italic')" title="Italic"><i>I</i></button>
+                <button class="format-btn" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+                <button class="format-btn" onclick="formatText('strikeThrough')" title="Strikethrough"><s>S</s></button>
+                
+                <div class="format-divider"></div>
+                
+                <button class="format-btn" onclick="formatText('insertUnorderedList')" title="Bullet List">•</button>
+                <button class="format-btn" onclick="formatText('insertOrderedList')" title="Numbered List">1.</button>
+                
+                <div class="format-divider"></div>
+                
+                <button class="format-btn" onclick="formatText('justifyLeft')" title="Align Left">⬅</button>
+                <button class="format-btn" onclick="formatText('justifyCenter')" title="Align Center">⬌</button>
+                <button class="format-btn" onclick="formatText('justifyRight')" title="Align Right">➡</button>
+                
+                <div class="format-divider"></div>
+                
+                <select onchange="formatBlock(this.value)" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                    <option value="p">Paragraph</option>
+                    <option value="h1">Heading 1</option>
+                    <option value="h2">Heading 2</option>
+                    <option value="h3">Heading 3</option>
+                    <option value="blockquote">Quote</option>
+                    <option value="pre">Code Block</option>
+                </select>
+                
+                <select onchange="changeFontSize(this.value)" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                    <option value="3">Normal</option>
+                    <option value="1">Small</option>
+                    <option value="5">Large</option>
+                    <option value="7">Huge</option>
+                </select>
+                
+                <input type="color" onchange="changeColor(this.value)" title="Text Color" style="width: 36px; height: 36px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">
+            </div>
+            
+            <div id="editor" class="plain-text" contenteditable="true" 
+                 oninput="updateStats(); autoSave()">Start typing here...
+
+Try these formatting patterns:
+
+# This is a Heading 1
+## This is a Heading 2
+### This is a Heading 3
+
+**This text will be bold**
+*This text will be italic*
+~~This text will be strikethrough~~
+
+- Bullet item 1
+- Bullet item 2
+- Bullet item 3
+
+1. Numbered item
+2. Another item
+3. Third item
+
+> This is a blockquote
+
+`inline code`
+---
+
+Links: https://example.com
+
+Click "Auto-Format" to convert!</div>
+            
+            <div class="status-bar">
+                <span id="charCount">Characters: 0</span>
+                <span id="wordCount">Words: 0</span>
+                <span id="modeIndicator">Mode: Plain Text</span>
+                <span id="lastSaved">Not saved yet</span>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>📖 Auto-Format Syntax Guide</h3>
+            <ul>
+                <li><code># Heading 1</code>, <code>## Heading 2</code>, <code>### Heading 3</code> — Headings</li>
+                <li><code>**bold**</code> or <code>__bold__</code> — Bold text</li>
+                <li><code>*italic*</code> or <code>_italic_</code> — Italic text</li>
+                <li><code>~~strikethrough~~</code> — Strikethrough text</li>
+                <li><code>- item</code> or <code>* item</code> — Bullet lists</li>
+                <li><code>1. item</code> — Numbered lists</li>
+                <li><code>> quote</code> — Blockquotes</li>
+                <li><code>`code`</code> — Inline code</li>
+                <li><code>```code block```</code> — Code blocks</li>
+                <li><code>---</code> or <code>***</code> — Horizontal rule</li>
+                <li><code>https://...</code> — Auto-linked URLs</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <input type="file" id="fileInput" accept=".txt,.html,.md" style="display: none;" onchange="handleFileLoad(event)">
+
+    <script>
+        const editor = document.getElementById('editor');
+        const formatToggle = document.getElementById('formatToggle');
+        const formatToolbar = document.getElementById('formatToolbar');
+        const modeIndicator = document.getElementById('modeIndicator');
+        let autoSaveTimeout;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            updateStats();
+        });
+
+        // Toggle between plain text and rich text
+        function toggleFormat() {
+            const isRichText = formatToggle.checked;
+            
+            if (isRichText) {
+                formatToolbar.classList.remove('hidden');
+                editor.classList.remove('plain-text');
+                editor.classList.add('rich-text');
+                modeIndicator.textContent = 'Mode: Rich Text';
+            } else {
+                formatToolbar.classList.add('hidden');
+                editor.classList.remove('rich-text');
+                editor.classList.add('plain-text');
+                modeIndicator.textContent = 'Mode: Plain Text';
+                // Strip formatting when switching to plain text
+                const plainText = editor.innerText;
+                editor.innerText = plainText;
+            }
+            
+            showNotification(isRichText ? 'Rich text mode enabled' : 'Plain text mode enabled');
+        }
+
+        // Convert plain text to rich text with smart formatting
+        function convertToRichText() {
+            let text = editor.innerText;
+            
+            // Enable rich text mode
+            formatToggle.checked = true;
+            formatToolbar.classList.remove('hidden');
+            editor.classList.remove('plain-text');
+            editor.classList.add('rich-text');
+            modeIndicator.textContent = 'Mode: Rich Text';
+
+            // Convert markdown-like syntax to HTML
+            let html = text;
+
+            // Escape HTML entities first
+            html = html.replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;');
+
+            // Code blocks (``` ... ```) - must be done before other formatting
+            html = html.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+
+            // Inline code (`code`)
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+            // Headings (# ## ###)
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            // Bold (**text** or __text__)
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+            // Italic (*text* or _text_) - be careful not to match already processed bold
+            html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+            html = html.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+
+            // Strikethrough (~~text~~)
+            html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+
+            // Horizontal rules (--- or ***)
+            html = html.replace(/^(-{3,}|\*{3,})$/gm, '<hr>');
+
+            // Blockquotes (> text)
+            html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+            // Merge consecutive blockquotes
+            html = html.replace(/<\/blockquote>\n<blockquote>/g, '<br>');
+
+            // Unordered lists (- item or * item)
+            html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+            // Wrap consecutive <li> items in <ul>
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, (match) => {
+                return '<ul>' + match.trim() + '</ul>';
+            });
+
+            // Ordered lists (1. item, 2. item, etc.)
+            html = html.replace(/^\d+\. (.+)$/gm, '<oli>$1</oli>');
+            // Wrap consecutive <oli> items in <ol>
+            html = html.replace(/(<oli>.*<\/oli>\n?)+/g, (match) => {
+                return '<ol>' + match.replace(/oli>/g, 'li>').trim() + '</ol>';
+            });
+
+            // URLs - convert to clickable links
+            html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>');
+
+            // Email addresses
+            html = html.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1">$1</a>');
+
+            // Convert remaining newlines to <br> (but not after block elements)
+            html = html.replace(/(?<!<\/h1>|<\/h2>|<\/h3>|<\/li>|<\/ul>|<\/ol>|<\/blockquote>|<\/pre>|<hr>)\n/g, '<br>\n');
+
+            // Clean up extra line breaks
+            html = html.replace(/<br>\n<br>/g, '</p><p>');
+            html = html.replace(/^(.+)$/gm, (match) => {
+                if (match.startsWith('<h') || match.startsWith('<ul') || match.startsWith('<ol') || 
+                    match.startsWith('<blockquote') || match.startsWith('<pre') || match.startsWith('<hr') ||
+                    match.startsWith('<p') || match.startsWith('</')) {
+                    return match;
+                }
+                return match;
+            });
+
+            editor.innerHTML = html;
+            updateStats();
+            showNotification('✨ Text converted to rich format!');
+        }
+
+        // Strip rich text back to plain text
+        function stripToPlainText() {
+            const plainText = editor.innerText;
+            editor.innerText = plainText;
+            
+            formatToggle.checked = false;
+            formatToolbar.classList.add('hidden');
+            editor.classList.remove('rich-text');
+            editor.classList.add('plain-text');
+            modeIndicator.textContent = 'Mode: Plain Text';
+            
+            updateStats();
+            showNotification('Formatting removed');
+        }
+
+        // Format text commands
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            editor.focus();
+        }
+
+        // Format block elements
+        function formatBlock(tag) {
+            document.execCommand('formatBlock', false, tag);
+            editor.focus();
+        }
+
+        // Change font size
+        function changeFontSize(size) {
+            document.execCommand('fontSize', false, size);
+            editor.focus();
+        }
+
+        // Change text color
+        function changeColor(color) {
+            document.execCommand('foreColor', false, color);
+            editor.focus();
+        }
+
+        // Save as file
+        function saveAsFile() {
+            const isRichText = formatToggle.checked;
+            let content, filename, type;
+            
+            if (isRichText) {
+                // Wrap in basic HTML structure
+                content = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Notepad Document</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; }
+        h1, h2, h3 { color: #333; }
+        blockquote { border-left: 4px solid #667eea; padding-left: 15px; color: #555; font-style: italic; }
+        code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; }
+        a { color: #667eea; }
+    </style>
+</head>
+<body>
+${editor.innerHTML}
+</body>
+</html>`;
+                filename = 'notepad.html';
+                type = 'text/html';
+            } else {
+                content = editor.innerText;
+                filename = 'notepad.txt';
+                type = 'text/plain';
+            }
+            
+            const blob = new Blob([content], { type: type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            updateLastSaved();
+            showNotification('File saved successfully!');
+        }
+
+        // Load file
+        function loadFile() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                
+                if (file.name.endsWith('.html')) {
+                    // Extract body content if it's a full HTML document
+                    const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+                    const htmlContent = bodyMatch ? bodyMatch[1] : content;
+                    
+                    formatToggle.checked = true;
+                    formatToolbar.classList.remove('hidden');
+                    editor.classList.remove('plain-text');
+                    editor.classList.add('rich-text');
+                    modeIndicator.textContent = 'Mode: Rich Text';
+                    editor.innerHTML = htmlContent;
+                } else {
+                    formatToggle.checked = false;
+                    formatToolbar.classList.add('hidden');
+                    editor.classList.remove('rich-text');
+                    editor.classList.add('plain-text');
+                    modeIndicator.textContent = 'Mode: Plain Text';
+                    editor.innerText = content;
+                }
+                
+                updateStats();
+                showNotification('File loaded successfully!');
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        // Clear editor
+        function clearEditor() {
+            if (confirm('Are you sure you want to clear all content?')) {
+                editor.innerHTML = '';
+                updateStats();
+                showNotification('Content cleared');
+            }
+        }
+
+        // Update character and word count
+        function updateStats() {
+            const text = editor.innerText;
+            const chars = text.length;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            
+            document.getElementById('charCount').textContent = `Characters: ${chars}`;
+            document.getElementById('wordCount').textContent = `Words: ${words}`;
+        }
+
+        // Auto-save to localStorage
+        function autoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                localStorage.setItem('notepadContent', editor.innerHTML);
+                localStorage.setItem('notepadFormat', formatToggle.checked);
+                updateLastSaved();
+            }, 1000);
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage() {
+            const savedContent = localStorage.getItem('notepadContent');
+            const savedFormat = localStorage.getItem('notepadFormat');
+            
+            if (savedContent) {
+                editor.innerHTML = savedContent;
+            }
+            
+            if (savedFormat === 'true') {
+                formatToggle.checked = true;
+                formatToolbar.classList.remove('hidden');
+                editor.classList.remove('plain-text');
+                editor.classList.add('rich-text');
+                modeIndicator.textContent = 'Mode: Rich Text';
+            }
+        }
+
+        // Update last saved time
+        function updateLastSaved() {
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            document.getElementById('lastSaved').textContent = `Last saved: ${time}`;
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2500);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 's') {
+                    e.preventDefault();
+                    saveAsFile();
+                } else if (e.key === 'o') {
+                    e.preventDefault();
+                    loadFile();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    convertToRichText();
+                }
+            }
+        });
+
+        // Paste as plain text option in plain text mode
+        editor.addEventListener('paste', (e) => {
+            if (!formatToggle.checked) {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            }
+        });
+    </script>
+</body>
+</html>
